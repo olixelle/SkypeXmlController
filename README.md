@@ -17,6 +17,7 @@ Once the app is launched, it keeps up to date 3 files :
 - var\skype2kodi\friends.xml : contains connected friends list with handle, fullname and avatar imagepath
 - var\skype2kodi\profile.xml : contains user information such as handle, fullname, and avatar image path
 - var\skype2kodi\missed_calls.xml : contains missed calls
+- var\skype2kodi\call.xml : available ONLY if a call is pending / ringing / active
  
 ## Skype action
 
