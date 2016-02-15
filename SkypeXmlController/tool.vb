@@ -23,4 +23,18 @@ Public Class Tool
         Return True
     End Function
 
+    Public Shared Sub log(txt As String)
+        Try
+            Dim logPath As String = Path.Combine(Application.StartupPath, "log.txt")
+            Dim objWriter As New System.IO.StreamWriter(logPath, True)
+            txt = System.DateTime.Now.ToString("HH:mm:ss") & " - " & txt
+            Debug.WriteLine(txt)
+            objWriter.WriteLine(txt)
+            objWriter.Close()
+        Catch ex As Exception
+            'nothing
+        End Try
+
+    End Sub
+
 End Class

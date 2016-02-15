@@ -38,6 +38,7 @@ Partial Class Form1
         Me.EndCallToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.CallContactToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.QuitToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.Timer1 = New System.Windows.Forms.Timer(Me.components)
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -130,6 +131,11 @@ Partial Class Form1
         Me.QuitToolStripMenuItem.Size = New System.Drawing.Size(176, 24)
         Me.QuitToolStripMenuItem.Text = "Quit"
         '
+        'Timer1
+        '
+        Me.Timer1.Enabled = True
+        Me.Timer1.Interval = 10000
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
@@ -158,5 +164,6 @@ Partial Class Form1
     Friend WithEvents AcceptCallToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents EndCallToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents CallContactToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents Timer1 As System.Windows.Forms.Timer
 
 End Class

@@ -1,23 +1,31 @@
-﻿Public Class Skype
+﻿Imports System.Configuration
+
+Public Class Skype
 
     Protected WithEvents oskype As SKYPE4COMLib.Skype
 
     Public imageDirectory As String
 
-    Public Event evtCallPending(friendHandle As String, friendName As String)
-    Public Event evtCallActive(friendHandle As String, friendName As String)
-    Public Event evtCallFinished(friendHandle As String, friendName As String)
+    Public Event evtCallIncoming(friendHandle As String, friendName As String, friendAvatar As String)
+    Public Event evtCallOutgoing(friendHandle As String, friendName As String, friendAvatar As String)
+    Public Event evtCallActive(friendHandle As String, friendName As String, friendAvatar As String)
+    Public Event evtCallFinished(friendHandle As String, friendName As String, friendAvatar As String)
 
     Protected currentCall As SKYPE4COMLib.Call
 
-    Protected skypePath As String = "C:\Program Files (x86)\Skype\Phone\Skype.exe"
+    Protected skypePath As String
+
+    Protected isOutgoingCall = False
 
     ''' <summary>
     ''' Constructor
     ''' </summary>
     ''' <param name="eImageDirectory">Image directory for avatars</param>
     ''' <remarks></remarks>
-    Public Sub New(eImageDirectory)
+    Public Sub New(eImageDirectory As String, eSkypePath As String)
+
+        Me.skypePath = eSkypePath
+        Tool.log("Skype path is " & Me.skypePath)
 
         'init skype OBJ
         Me.oskype = New SKYPE4COMLib.Skype
@@ -37,16 +45,21 @@
         Dim friends As New ArrayList
 
         For Each ofriend In Me.oskype.Friends
-            If ofriend.OnLineStatus = Me.oskype.Convert.TextToUserStatus("ONLINE") Then
+            If ofriend.OnLineStatus <> Me.oskype.Convert.TextToUserStatus("OFFLINE") Then
                 Dim obj As New skypeFriend
-                obj.label = ofriend.fullName
                 obj.handle = ofriend.handle
+                obj.label = ofriend.fullName
+                If (obj.label = "") Then
+                    obj.label = obj.handle
+                End If
                 obj.avatar = Me.getFriendPicture(obj.handle)
 
-                friends.Add(obj)
+                If obj.handle <> "echo123" Then
+                    friends.Add(obj)
+                End If
             End If
         Next
-
+        friends.Sort()
         Return friends
     End Function
 
@@ -65,7 +78,7 @@
             Dim cmd As New SKYPE4COMLib.Command
             cmd.Command = "GET USER " & friendHandle & " AVATAR 1 " & filePath
             Me.oskype.SendCommand(cmd)
-            Debug.WriteLine("Download avatar to " & filePath)
+            Tool.log("Download avatar to " & filePath)
         End If
 
         Return filePath
@@ -110,13 +123,17 @@
     ''' <remarks></remarks>
     Private Sub oskype_CallStatus(pCall As SKYPE4COMLib.Call, Status As SKYPE4COMLib.TCallStatus) Handles oskype.CallStatus
 
-        Debug.WriteLine("Call status event : " & Status)
+        Tool.log("Call status event : " & Status)
 
         Select Case Status
-            Case SKYPE4COMLib.TCallStatus.clsRouting, SKYPE4COMLib.TCallStatus.clsRinging
-                RaiseEvent evtCallPending(pCall.PartnerHandle, pCall.PartnerDisplayName)
+            Case SKYPE4COMLib.TCallStatus.clsRinging, SKYPE4COMLib.TCallStatus.clsRouting
+                If Me.isOutgoingCall Then
+                    RaiseEvent evtCallOutgoing(pCall.PartnerHandle, pCall.PartnerDisplayName, Me.getFriendPicture(pCall.PartnerHandle))
+                Else
+                    RaiseEvent evtCallIncoming(pCall.PartnerHandle, pCall.PartnerDisplayName, Me.getFriendPicture(pCall.PartnerHandle))
+                End If
             Case SKYPE4COMLib.TCallStatus.clsInProgress '5
-                RaiseEvent evtCallActive(pCall.PartnerHandle, pCall.PartnerDisplayName)
+                RaiseEvent evtCallActive(pCall.PartnerHandle, pCall.PartnerDisplayName, Me.getFriendPicture(pCall.PartnerHandle))
             Case SKYPE4COMLib.TCallStatus.clsEarlyMedia
             Case SKYPE4COMLib.TCallStatus.clsLocalHold
             Case SKYPE4COMLib.TCallStatus.clsOnHold
@@ -125,27 +142,45 @@
             Case SKYPE4COMLib.TCallStatus.clsTransferring
             Case SKYPE4COMLib.TCallStatus.clsUnknown
             Case SKYPE4COMLib.TCallStatus.clsUnplaced
-                '???
-            Case SKYPE4COMLib.TCallStatus.clsMissed, SKYPE4COMLib.TCallStatus.clsBusy, SKYPE4COMLib.TCallStatus.clsRefused, SKYPE4COMLib.TCallStatus.clsCancelled, SKYPE4COMLib.TCallStatus.clsFailed, SKYPE4COMLib.TCallStatus.clsFinished   '7
-                'call stopped
-                RaiseEvent evtCallFinished(pCall.PartnerHandle, pCall.PartnerDisplayName)
+                'nothing
+            Case SKYPE4COMLib.TCallStatus.clsCancelled  '11
+                RaiseEvent evtCallFinished(pCall.PartnerHandle, pCall.PartnerDisplayName, Me.getFriendPicture(pCall.PartnerHandle))
+                Me.isOutgoingCall = False
+            Case SKYPE4COMLib.TCallStatus.clsBusy
+                RaiseEvent evtCallFinished(pCall.PartnerHandle, pCall.PartnerDisplayName, Me.getFriendPicture(pCall.PartnerHandle))
+                Me.isOutgoingCall = False
+            Case SKYPE4COMLib.TCallStatus.clsRefused    '9
+                RaiseEvent evtCallFinished(pCall.PartnerHandle, pCall.PartnerDisplayName, Me.getFriendPicture(pCall.PartnerHandle))
+                Me.isOutgoingCall = False
+            Case SKYPE4COMLib.TCallStatus.clsFailed
+                RaiseEvent evtCallFinished(pCall.PartnerHandle, pCall.PartnerDisplayName, Me.getFriendPicture(pCall.PartnerHandle))
+                Me.isOutgoingCall = False
+            Case SKYPE4COMLib.TCallStatus.clsMissed
+                RaiseEvent evtCallFinished(pCall.PartnerHandle, pCall.PartnerDisplayName, Me.getFriendPicture(pCall.PartnerHandle))
+                Me.isOutgoingCall = False
+            Case SKYPE4COMLib.TCallStatus.clsFinished   '7
+                RaiseEvent evtCallFinished(pCall.PartnerHandle, pCall.PartnerDisplayName, Me.getFriendPicture(pCall.PartnerHandle))
+                Me.isOutgoingCall = False
         End Select
     End Sub
 
     Public Sub CallFriend(ByVal friendHandle As String)
-        friendHandle = "axelle.prevost"
+        'friendHandle = "axelle.prevost"
 
         Dim shellCommand As String = """" & Me.skypePath & """ /callto:" & friendHandle
+        Tool.log("Execute shell cmd : " & shellCommand)
         Shell(shellCommand)
+
+        isOutgoingCall = True
 
         'Dim i As Integer
         'Do While i < 50
         '    Me.currentCall = Me.oskype.PlaceCall(friendHandle)
-        '    Debug.WriteLine("Call statut = " & Me.currentCall.Status & " : " & Me.currentCall.FailureReason)
+        '    Tool.log("Call statut = " & Me.currentCall.Status & " : " & Me.currentCall.FailureReason)
         '    Threading.Thread.Sleep(500)
         '    i += 1
         'Loop
-        'Debug.WriteLine("Call attempt - statut = " & Me.currentCall.Status)
+        'Tool.log("Call attempt - statut = " & Me.currentCall.Status)
 
     End Sub
 
@@ -160,10 +195,10 @@
     End Sub
 
     Private Sub oskype_Command(pCommand As SKYPE4COMLib.Command) Handles oskype.Command
-        Debug.WriteLine("Skype command = " & pCommand.Command)
+        'Tool.log("Skype command = " & pCommand.Command)
     End Sub
 
     Private Sub oskype_Error(pCommand As SKYPE4COMLib.Command, Number As Integer, Description As String) Handles oskype.Error
-        Debug.WriteLine("Skype error = " & pCommand.Command & " : " & Description)
+        Tool.log("Skype error = " & pCommand.Command & " : " & Description)
     End Sub
 End Class

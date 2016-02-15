@@ -8,7 +8,18 @@
         Dim action As New action
 
         Dim doc As New Xml.XmlDocument
-        doc.Load(path)
+        Dim maxTries As Integer = 5
+        Dim i As Integer = 1
+        Do While True
+            Try
+                doc.Load(path)
+                Exit Do
+            Catch ex As Exception
+                'nothing
+            End Try
+            i += 1
+        Loop
+
 
         action.method = doc.SelectSingleNode(".//method").InnerText
         action.param = doc.SelectSingleNode(".//param").InnerText

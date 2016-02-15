@@ -19,6 +19,11 @@ Public Class Kodi2Skype
         Me.actionsDirectory = eActionDirectory
         Me.skype = eSkype
 
+        Dim filePath As String = IO.Path.Combine(Me.actionsDirectory, "action.xml")
+        If IO.File.Exists(filePath) Then
+            IO.File.Delete(filePath)
+        End If
+
         Me.watchfolder = New FileSystemWatcher(Me.actionsDirectory)
         watchfolder.EnableRaisingEvents = True
 
@@ -49,7 +54,7 @@ Public Class Kodi2Skype
     ''' <param name="action"></param>
     ''' <remarks></remarks>
     Public Sub executeAction(action As action)
-        Debug.WriteLine("Execute action " & action.method & " with param " & action.param)
+        Tool.log("Execute action " & action.method & " with param " & action.param)
         Select Case action.method
             Case kMethodChangeStatus
             Case kMethodCallFriend

@@ -30,6 +30,7 @@
         Dim StartTime As DateTime = DateTime.Now
 
         Dim filePath As String = IO.Path.Combine(Me.baseDirectory, "friends.xml")
+        Tool.WaitReady(filePath)
         Dim xmlDoc As Xml.XmlWriter = Xml.XmlWriter.Create(filePath)
         xmlDoc.WriteStartDocument()
         xmlDoc.WriteStartElement("friends")
@@ -55,7 +56,7 @@
 
         Dim EndTime As DateTime = DateTime.Now
         Dim TotalTime As TimeSpan = EndTime - StartTime
-        Debug.WriteLine("Friends file generated in " & TotalTime.ToString("ss") & " seconds")
+        Tool.log("Friends file generated in " & TotalTime.ToString("ss") & " seconds")
     End Sub
 
     ''' <summary>
@@ -81,7 +82,7 @@
         xmlDoc.WriteEndDocument()
         xmlDoc.Close()
 
-        Debug.WriteLine("Profile file generated")
+        Tool.log("Profile file generated")
     End Sub
 
     ''' <summary>
@@ -107,27 +108,29 @@
         xmlDoc.WriteEndDocument()
         xmlDoc.Close()
 
-        Debug.WriteLine("Missed call file generated")
+        Tool.log("Missed call file generated")
     End Sub
 
 
     
 
-    Public Sub generateCallFile(status, partnerHandle, partnerName)
+    Public Sub generateCallFile(status As String, partnerHandle As String, partnerName As String, friendAvatar As String)
         Dim filePath As String = IO.Path.Combine(Me.baseDirectory, "call.xml")
-        Dim buffer As String = ""
 
-        Select Case status
-            Case "pending", "active"
-                buffer = status & vbTab & partnerHandle & vbTab & partnerName & vbCrLf
-                System.IO.File.WriteAllText(filePath, buffer)
-            Case "finished"
-                If (System.IO.File.Exists(filePath)) Then
-                    System.IO.File.Delete(filePath)
-                End If
-        End Select
+        Dim xmlDoc As Xml.XmlWriter = Xml.XmlWriter.Create(filePath)
+        xmlDoc.WriteStartDocument()
+        xmlDoc.WriteStartElement("call")
 
-        Debug.WriteLine("Call file generated for status " & status & " and friend " & partnerHandle)
+        xmlDoc.WriteElementString("status", status)
+        xmlDoc.WriteElementString("handle", partnerHandle)
+        xmlDoc.WriteElementString("name", partnerName)
+        xmlDoc.WriteElementString("avatar", friendAvatar)
+
+        xmlDoc.WriteEndElement()
+        xmlDoc.WriteEndDocument()
+        xmlDoc.Close()
+
+        Tool.log("Call file generated for status " & status & " and friend " & partnerHandle)
     End Sub
 
 End Class

@@ -8,11 +8,13 @@ Public Class SkypeWindow
     Private Const WM_SYSCOMMAND As Integer = 274
     Private Const SC_MAXIMIZE As Integer = 61488
     Private Const SC_RESTORE As Long = &HF120&
+    Private Const WM_SETTEXT As Integer = &HC
 
     Declare Auto Function SetParent Lib "user32.dll" (ByVal hWndChild As IntPtr, ByVal hWndNewParent As IntPtr) As Integer
     Declare Auto Function GetParent Lib "user32.dll" (ByVal hWndChild As IntPtr) As IntPtr
     Declare Auto Function SendMessage Lib "user32.dll" (ByVal hWnd As IntPtr, ByVal Msg As Integer, ByVal wParam As Integer, ByVal lParam As Integer) As Integer
     Declare Auto Function FindWindow Lib "user32.dll" (ByVal strClassName As String, ByVal strWindowName As String) As Integer
+    Declare Auto Function SetActiveWindow Lib "user32.dll" (ByVal hwnd As Integer) As Integer
 
     ''' <summary>
     ''' 
@@ -29,15 +31,15 @@ Public Class SkypeWindow
         Dim result As Integer
 
         result = SendMessage(handle, WM_SYSCOMMAND, SC_RESTORE, 0)
-        Debug.WriteLine("Restore skype window with handle #" & handle & ". Result is :" & result)
+        Tool.log("Restore skype window with handle #" & handle & ". Result is :" & result)
 
         result = SetParent(handle, formContainer.Handle)
-        Debug.WriteLine("Catch skype window with handle #" & handle & ". Result is :" & result)
+        Tool.log("Catch skype window with handle #" & handle & ". Result is :" & result)
 
         Threading.Thread.Sleep(1000)
 
         result = SendMessage(handle, WM_SYSCOMMAND, SC_MAXIMIZE, 0)
-        Debug.WriteLine("Maximize skype window with handle #" & handle & ". Result is :" & result)
+        Tool.log("Maximize skype window with handle #" & handle & ". Result is :" & result)
 
 
         Return True
@@ -54,10 +56,10 @@ Public Class SkypeWindow
         Dim result As Integer
 
         result = SendMessage(handle, WM_SYSCOMMAND, SC_RESTORE, 0)
-        Debug.WriteLine("Restore skype window with handle #" & handle & ". Result is :" & result)
+        Tool.log("Restore skype window with handle #" & handle & ". Result is :" & result)
 
         result = SendMessage(handle, WM_SYSCOMMAND, SC_MAXIMIZE, 0)
-        Debug.WriteLine("resize skype window with handle #" & handle & ". Result is :" & result)
+        Tool.log("resize skype window with handle #" & handle & ". Result is :" & result)
 
         Return True
     End Function
@@ -73,10 +75,10 @@ Public Class SkypeWindow
         Dim result As Integer
 
         result = SendMessage(handle, WM_SYSCOMMAND, SC_RESTORE, 0)
-        Debug.WriteLine("Restore skype window with handle #" & handle & ". Result is :" & result)
+        Tool.log("Restore skype window with handle #" & handle & ". Result is :" & result)
 
         result = SetParent(handle, IntPtr.Zero)
-        Debug.WriteLine("release skype window with handle #" & handle & ". Result is :" & result)
+        Tool.log("release skype window with handle #" & handle & ". Result is :" & result)
 
         skypeWindowHandle = IntPtr.Zero
 
@@ -111,13 +113,26 @@ Public Class SkypeWindow
     End Function
 
     Public Sub maximize()
+        
         Me.formContainer.WindowState = FormWindowState.Maximized
         Me.resizeSkypeWindow()
+        Me.sendFullscreenCmd()
         Me.formContainer.Show()
+        Me.formContainer.BringToFront()
+        Me.formContainer.Focus()
+
+        SetActiveWindow(Me.formContainer.Handle)
+
     End Sub
 
     Public Sub minimize()
         Me.formContainer.Hide()
+        Tool.log("Minimize skype window")
     End Sub
+
+    Public Sub sendFullscreenCmd()
+
+    End Sub
+
 
 End Class
